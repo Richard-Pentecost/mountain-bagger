@@ -2,9 +2,29 @@ import React, { Component } from 'react';
 import ReactMapboxG1, { Layer, Feature } from 'react-mapbox-gl';
 import '../styles/map.css';
 
+const REACT_APP_MAPBOX_TOKEN = 'pk.eyJ1IjoidGhlcHVua3lvbmUiLCJhIjoiY2p4MzJjd3g1MG9wZDN5cGtwb2VwY2x0NyJ9.S0cbsxNX2LA2_Zcud97cYw';
 const MapBox = ReactMapboxG1({
-  accessToken: process.env.REACT_APP_MAPBOX_TOKEN,
+  accessToken: REACT_APP_MAPBOX_TOKEN,
 });
+
+const mappedCoordinates = [
+  [-3.211555, 54.454235],
+  [-3.2105, 54.454357],
+  [-3.209996, 54.454647],
+  [-3.209816, 54.45494],
+  [-3.20963, 54.455429],
+  [-3.209245, 54.45581],
+];
+
+const lineLayout = {
+  'line-cap': 'round',
+  'line-join': 'round',
+};
+
+const linePaint = {
+  'line-color': '#4790E5',
+  'line-width': 12
+};
 
 class MapTest extends Component {
   constructor(props) {
@@ -71,7 +91,15 @@ class MapTest extends Component {
           >
             <Feature coordinates={[endLng, endLat]} />
           </Layer>
+
           <Layer
+            type="line"
+            layout={lineLayout}
+            paint={linePaint}
+          >
+            <Feature coordinates={mappedCoordinates}/>
+          </Layer>
+          {/* <Layer
             id="route"
             type="line"
             sourceId={route}
@@ -84,7 +112,7 @@ class MapTest extends Component {
               'line-width': 5,
               'line-opacity': 0.75,
             }}
-          />
+          /> */}
         </MapBox>
       </div>
     );

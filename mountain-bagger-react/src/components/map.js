@@ -3,8 +3,9 @@ import ReactMapboxG1, { Layer, Feature, } from 'react-mapbox-gl';
 import '../styles/map.css';
 import Geocoder from 'react-mapbox-gl-geocoder';
 
+const REACT_APP_MAPBOX_TOKEN = 'pk.eyJ1IjoidGhlcHVua3lvbmUiLCJhIjoiY2p4MzJjd3g1MG9wZDN5cGtwb2VwY2x0NyJ9.S0cbsxNX2LA2_Zcud97cYw';
 const MapBox = ReactMapboxG1({
-  accessToken: process.env.REACT_APP_MAPBOX_TOKEN,
+  accessToken: REACT_APP_MAPBOX_TOKEN,
 });
 
 const BASE_URL = 'https://api.mapbox.com/directions/v5/mapbox';
@@ -20,7 +21,9 @@ class Map extends Component {
       zoom: 1.5,
       endLng: null,
       endLat: null,
+      travel: 'walking',
       route: {},
+      duration: null,
     };
   }
 
@@ -45,15 +48,25 @@ class Map extends Component {
     this.getRoute();
   };
 
+  handleActivity = (event) => {
+    this.setState({
+      ...this.state,
+      travel: event.target.value,
+    });
+    this.getRoute();
+  };
+
   getRoute = () => {
-    const travel = 'walking';
-    const { lng, lat, endLng, endLat } = this.state;
-    const token = process.env.REACT_APP_MAPBOX_TOKEN;
+    const { lng, lat, endLng, endLat, travel } = this.state;
+    const token = REACT_APP_MAPBOX_TOKEN;
     const apiRequest = `${BASE_URL}/${travel}/${lng},${lat};${endLng},${endLat}${URL_QUERY}${token}`;
+    console.log(apiRequest);
     fetch(apiRequest)
       .then(response => response.json())
-      .then(data => data.routes[0].geometry.coordinates)
+      .then(data => data.routes[0])
       .then(data => {
+        const duration = Math.round(data.duration / 60);
+        const route = data.geometry.coordinates;
         const geojson = {
           type: 'geojson',
           data: {
@@ -61,24 +74,33 @@ class Map extends Component {
             properties: {},
             geometry: {
               type: 'LineString',
-              coordinates: data,
+              coordinates: route,
             },
           },
         };
+
         this.setState({
           ...this.state,
           route: geojson,
+          duration,
         });
+        console.log(this.state);
       });
   };
 
   render() {
-    const { endLng, endLat, lng, lat, viewport, route, zoom } = this.state;
-    console.log(route);
+    const { endLng, endLat, lng, lat, viewport, route, duration, travel } = this.state;
+    if (Object.keys(route).length !== 0) {
+      console.log(duration);
+    }
+    // console.log(`${lat}, ${lng}: Starting latitude and longitude`);
+    // console.log(`${endLat}, ${endLng}: Ending latitude and longitude`);
+    // console.log(process.env.REACT_APP_MAPBOX_TOKEN);
     return (
       <div>
         <div>
-          <div>{`Longitude: ${lng} Latitude: ${lat} Zoom: ${zoom}`}</div>
+          {/* <div>{`Longitude: ${lng} Latitude: ${lat} Zoom: ${zoom}`}</div> */}
+          <div>{`${travel} this route will take ${duration} mins`}</div>
         </div>
         <MapBox
           style="mapbox://styles/mapbox/outdoors-v10/"
@@ -110,8 +132,9 @@ class Map extends Component {
             )
           }
 
-          {
+          {/* {
             Object.keys(route).length !== 0 && (
+            // prevRoute !== route && (
               <Layer
                 id="route"
                 type="line"
@@ -128,12 +151,32 @@ class Map extends Component {
               />
             )
           } */}
+          {Object.keys(route).length !== 0 && (
+            <Layer
+              type="line"
+              layout={{
+                'line-join': 'round',
+                'line-cap': 'round',
+              }}
+              paint={{
+                'line-color': '#3887b4',
+                'line-width': 5,
+                'line-opacity': 0.75,
+              }}
+            >
+              <Feature coordinates={route.data.geometry.coordinates} />
+            </Layer>
+          )}
           
         </MapBox>
+        <div>
+          <button onClick={this.handleActivity} value="walking">Walking</button>
+          <button onClick={this.handleActivity} value="cycling">Cycling</button>
+        </div>
         <Geocoder
           viewport={viewport}
           onSelected={this.onSelected}
-          mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
+          mapboxApiAccessToken={REACT_APP_MAPBOX_TOKEN}
         />
       </div>
     );
