@@ -79,16 +79,13 @@ class Map extends Component {
 
   render() {
     const { endLng, endLat, lng, lat, viewport, route, duration, travel, distance } = this.state;
-    if (Object.keys(route).length !== 0) {
-      console.log(duration);
-      console.log(distance);
-    }
+    const modeOfTravel = travel.charAt(0).toUpperCase() + travel.slice(1);
 
     return (
       <div>
         <div>
           <div className="transport">
-            {`${travel}:`}
+            {`${modeOfTravel}:`}
           </div>
           <div className="distance">
             {`Distance: ${distance}km`}
