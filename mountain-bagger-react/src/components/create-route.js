@@ -10,7 +10,7 @@ const CreateRoute = (props) => {
   return (
     <div>
       <Link to="/">Profile Page</Link>
-      <Map />
+      <Map {...props} />
     </div>
   );
 };

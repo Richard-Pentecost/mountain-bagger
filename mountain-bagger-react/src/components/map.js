@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import ReactMapboxG1, { Layer, Feature, } from 'react-mapbox-gl';
+import ReactMapboxG1, { Layer, Feature } from 'react-mapbox-gl';
 import '../styles/map.css';
 import Geocoder from 'react-mapbox-gl-geocoder';
 
@@ -36,29 +36,32 @@ class Map extends Component {
     });
   };
 
-  onClick = (map, evt) => {
+  onMapClick = (map, evt) => {
     const coordsObj = evt.lngLat;
     const coordinates = Object.keys(coordsObj).map((key) => {
       return coordsObj[key];
     });
-    this.setState({
-      ...this.state,
-      endLng: coordinates[0],
-      endLat: coordinates[1],
-    });
-    this.getRoute();
+    const endLongitude = coordinates[0];
+    const endLatitude = coordinates[1];
+    const modeOfTransport = this.state.travel;
+
+    this.getRoute(endLongitude, endLatitude, modeOfTransport);
   };
 
-  handleActivity = (event) => {
-    this.setState({
-      ...this.state,
-      travel: event.target.value,
-    });
-    this.getRoute();
+  handleModeOfTransport = (event) => {
+    const endLongitude = this.state.endLng;
+    const endLatitude = this.state.endLat;
+    const modeOfTransport = event.target.value;
+
+    // this.setState({
+    //   ...this.state,
+    //   travel: event.target.value,
+    // }, () => this.getRoute());
+    this.getRoute(endLongitude, endLatitude, modeOfTransport);
   };
 
-  getRoute = () => {
-    const { lng, lat, endLng, endLat, travel } = this.state;
+  getRoute = (endLng, endLat, travel) => {
+    const { lng, lat } = this.state;
     const token = REACT_APP_MAPBOX_TOKEN;
     const apiRequest = `${BASE_URL}/${travel}/${lng},${lat};${endLng},${endLat}${URL_QUERY}${token}`;
     fetch(apiRequest)
@@ -70,6 +73,9 @@ class Map extends Component {
         const route = data.geometry.coordinates;
         this.setState({
           ...this.state,
+          endLng,
+          endLat,
+          travel,
           route,
           duration,
           distance,
@@ -83,17 +89,21 @@ class Map extends Component {
 
     return (
       <div>
-        <div>
-          <div className="transport">
-            {`${modeOfTravel}:`}
-          </div>
-          <div className="distance">
-            {`Distance: ${distance}km`}
-          </div>
-          <div className="duration">
-            {`Time: ${duration}mins`}
-          </div>
-        </div>
+        {
+          duration && (
+            <div className="routeInfomation">
+              <div className="modeOfTransport">
+                {`${modeOfTravel}:`}
+              </div>
+              <div className="distance">
+                {`Distance: ${distance}km`}
+              </div>
+              <div className="duration">
+                {`Time: ${duration}mins`}
+              </div>
+            </div>
+          )
+        }
         <MapBox
           style="mapbox://styles/mapbox/outdoors-v10/"
           center={[lng, lat]}
@@ -101,7 +111,7 @@ class Map extends Component {
             height: '50vh',
             width: '50vh',
           }}
-          onClick={this.onClick}
+          onClick={this.onMapClick}
         >
           <Layer
             type="symbol"
@@ -145,8 +155,8 @@ class Map extends Component {
 
         </MapBox>
         <div>
-          <button onClick={this.handleActivity} value="walking">Walking</button>
-          <button onClick={this.handleActivity} value="cycling">Cycling</button>
+          <button onClick={this.handleModeOfTransport} value="walking">Walking</button>
+          <button onClick={this.handleModeOfTransport} value="cycling">Cycling</button>
         </div>
         <Geocoder
           viewport={viewport}
