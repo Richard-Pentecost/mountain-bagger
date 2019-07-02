@@ -24,6 +24,7 @@ class Map extends Component {
       travel: 'walking',
       route: {},
       duration: null,
+      distance: null,
     };
   }
 
@@ -60,47 +61,41 @@ class Map extends Component {
     const { lng, lat, endLng, endLat, travel } = this.state;
     const token = REACT_APP_MAPBOX_TOKEN;
     const apiRequest = `${BASE_URL}/${travel}/${lng},${lat};${endLng},${endLat}${URL_QUERY}${token}`;
-    console.log(apiRequest);
     fetch(apiRequest)
       .then(response => response.json())
       .then(data => data.routes[0])
       .then(data => {
+        const distance = (data.distance / 1000).toFixed(3);
         const duration = Math.round(data.duration / 60);
         const route = data.geometry.coordinates;
-        const geojson = {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: route,
-            },
-          },
-        };
-
         this.setState({
           ...this.state,
-          route: geojson,
+          route,
           duration,
+          distance,
         });
-        console.log(this.state);
       });
   };
 
   render() {
-    const { endLng, endLat, lng, lat, viewport, route, duration, travel } = this.state;
+    const { endLng, endLat, lng, lat, viewport, route, duration, travel, distance } = this.state;
     if (Object.keys(route).length !== 0) {
       console.log(duration);
+      console.log(distance);
     }
-    // console.log(`${lat}, ${lng}: Starting latitude and longitude`);
-    // console.log(`${endLat}, ${endLng}: Ending latitude and longitude`);
-    // console.log(process.env.REACT_APP_MAPBOX_TOKEN);
+
     return (
       <div>
         <div>
-          {/* <div>{`Longitude: ${lng} Latitude: ${lat} Zoom: ${zoom}`}</div> */}
-          <div>{`${travel} this route will take ${duration} mins`}</div>
+          <div className="transport">
+            {`${travel}:`}
+          </div>
+          <div className="distance">
+            {`Distance: ${distance}km`}
+          </div>
+          <div className="duration">
+            {`Time: ${duration}mins`}
+          </div>
         </div>
         <MapBox
           style="mapbox://styles/mapbox/outdoors-v10/"
@@ -132,13 +127,10 @@ class Map extends Component {
             )
           }
 
-          {/* {
+          {
             Object.keys(route).length !== 0 && (
-            // prevRoute !== route && (
               <Layer
-                id="route"
                 type="line"
-                sourceId={route}
                 layout={{
                   'line-join': 'round',
                   'line-cap': 'round',
@@ -148,26 +140,12 @@ class Map extends Component {
                   'line-width': 5,
                   'line-opacity': 0.75,
                 }}
-              />
+              >
+                <Feature coordinates={route} />
+              </Layer>
             )
-          } */}
-          {Object.keys(route).length !== 0 && (
-            <Layer
-              type="line"
-              layout={{
-                'line-join': 'round',
-                'line-cap': 'round',
-              }}
-              paint={{
-                'line-color': '#3887b4',
-                'line-width': 5,
-                'line-opacity': 0.75,
-              }}
-            >
-              <Feature coordinates={route.data.geometry.coordinates} />
-            </Layer>
-          )}
-          
+          }
+
         </MapBox>
         <div>
           <button onClick={this.handleActivity} value="walking">Walking</button>
